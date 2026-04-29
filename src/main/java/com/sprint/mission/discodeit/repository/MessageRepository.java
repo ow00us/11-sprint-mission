@@ -31,6 +31,13 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   @EntityGraph(attributePaths = {"channel", "author", "author.profile", "attachments"})
   Slice<Message> findAllByChannelIdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
+  @EntityGraph(attributePaths = {"channel", "author", "author.profile", "attachments"})
+  Slice<Message> findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(
+      UUID channelId,
+      Instant cursor,
+      Pageable pageable
+  );
+
   @Query("""
       select m.channel.id as channelId, max(m.createdAt) as lastMessageAt
       from Message m

@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.dto.response;
 
+import java.time.Instant;
 import java.util.List;
 
 public record PageResponse<T>(
@@ -7,5 +8,6 @@ public record PageResponse<T>(
         int number,
         int size,
         boolean hasNext,
-        Long totalElements
+        Long totalElements,
+        Instant nextCursor
 ) {}

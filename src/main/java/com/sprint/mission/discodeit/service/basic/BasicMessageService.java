@@ -23,6 +23,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -76,9 +77,17 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Pageable pageable) {
-    Slice<Message> slice = messageRepository
-            .findAllByChannelIdOrderByCreatedAtDesc(channelId, pageable);
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, Pageable pageable) {
+    Slice<Message> slice = cursor == null
+            ? messageRepository.findAllByChannelIdOrderByCreatedAtDesc(channelId, pageable)
+            : messageRepository.findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(
+                    channelId,
+                    cursor,
+                    pageable
+            );
+    if (cursor != null) {
+      return pageMapper.toCursorResponse(slice, messageMapper::toDto, Message::getCreatedAt);
+    }
     return pageMapper.toResponse(slice, messageMapper::toDto);
   }
 

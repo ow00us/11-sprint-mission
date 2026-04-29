@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ public class PageMapper {
                 slice.getNumber(),
                 slice.getSize(),
                 slice.hasNext(),
+                null,
                 null
         );
     }
@@ -32,7 +34,30 @@ public class PageMapper {
                 page.getNumber(),
                 page.getSize(),
                 page.hasNext(),
-                page.getTotalElements()
+                page.getTotalElements(),
+                null
+        );
+    }
+
+    public <T, R> PageResponse<R> toCursorResponse(
+            Slice<T> slice,
+            Function<T, R> mapper,
+            Function<T, Instant> cursorExtractor
+    ) {
+        List<T> source = slice.getContent();
+        List<R> content = source.stream()
+                .map(mapper)
+                .toList();
+        Instant nextCursor = slice.hasNext() && !source.isEmpty()
+                ? cursorExtractor.apply(source.get(source.size() - 1))
+                : null;
+        return new PageResponse<>(
+                content,
+                slice.getNumber(),
+                slice.getSize(),
+                slice.hasNext(),
+                null,
+                nextCursor
         );
     }
 }
