@@ -76,7 +76,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
                                 .toString()
                 )
                 .contentType(MediaType.parseMediaType(dto.contentType()))
-                .contentLength(dto.fileSize())
+                .contentLength(dto.size())
                 .body(new InputStreamResource(inputStream));
     }
 }

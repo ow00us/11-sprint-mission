@@ -10,8 +10,6 @@ public class ReadStatusMapper {
     public ReadStatusDto toDto(ReadStatus readStatus) {
         return new ReadStatusDto(
                 readStatus.getId(),
-                readStatus.getCreatedAt(),
-                readStatus.getUpdatedAt(),
                 readStatus.getUser().getId(),
                 readStatus.getChannel().getId(),
                 readStatus.getLastReadAt()

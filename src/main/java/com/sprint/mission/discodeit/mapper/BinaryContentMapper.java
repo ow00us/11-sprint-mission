@@ -10,7 +10,6 @@ public class BinaryContentMapper {
     public BinaryContentDto toDto(BinaryContent binaryContent) {
         return new BinaryContentDto(
                 binaryContent.getId(),
-                binaryContent.getCreatedAt(),
                 binaryContent.getFileName(),
                 binaryContent.getFileSize(),
                 binaryContent.getContentType()
