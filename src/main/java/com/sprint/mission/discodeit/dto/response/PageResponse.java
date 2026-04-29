@@ -6,5 +6,6 @@ public record PageResponse<T>(
         List<T> content,
         int number,
         int size,
-        Long totalElements    // null 가능
+        boolean hasNext,
+        Long totalElements
 ) {}

@@ -73,6 +73,7 @@ public class BasicUserStatusService implements UserStatusService {
     return userStatusMapper.toDto(updatedUserStatus);
   }
 
+  @Transactional
   @Override
   public UserStatusDto updateByUserId(UUID userId, UserStatusUpdateRequest request) {
     Instant newLastActiveAt = request.newLastActiveAt();
