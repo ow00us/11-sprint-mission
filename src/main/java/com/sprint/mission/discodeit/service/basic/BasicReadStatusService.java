@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Transactional(readOnly = true)
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicReadStatusService implements ReadStatusService {
@@ -35,6 +37,7 @@ public class BasicReadStatusService implements ReadStatusService {
   public ReadStatusDto create(ReadStatusCreateRequest request) {
     UUID userId = request.userId();
     UUID channelId = request.channelId();
+    log.debug("Creating read status userId={}, channelId={}", userId, channelId);
 
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " does not exist"));
@@ -45,6 +48,7 @@ public class BasicReadStatusService implements ReadStatusService {
             .anyMatch(rs -> rs.getChannel().getId().equals(channelId));
 
     if (alreadyExists) {
+      log.debug("Read status already exists userId={}, channelId={}", userId, channelId);
       ReadStatus existingReadStatus = readStatusRepository.findAllByUserId(userId).stream()
               .filter(rs -> rs.getChannel().getId().equals(channelId))
               .findFirst().get();
@@ -53,6 +57,8 @@ public class BasicReadStatusService implements ReadStatusService {
 
     ReadStatus readStatus = new ReadStatus(user, channel, request.lastReadAt());
     ReadStatus createdReadStatus = readStatusRepository.save(readStatus);
+    log.info("Read status created id={}, userId={}, channelId={}",
+        createdReadStatus.getId(), userId, channelId);
     return readStatusMapper.toDto(createdReadStatus);
   }
 
@@ -75,11 +81,13 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     Instant newLastReadAt = request.newLastReadAt();
+    log.debug("Updating read status id={}", readStatusId);
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(
             () -> new NoSuchElementException("ReadStatus with id " + readStatusId + " not found"));
     readStatus.update(newLastReadAt);
     ReadStatus updatedReadStatus = readStatusRepository.save(readStatus);
+    log.info("Read status updated id={}", updatedReadStatus.getId());
     return readStatusMapper.toDto(updatedReadStatus);
   }
 
@@ -87,8 +95,10 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public void delete(UUID readStatusId) {
     if (!readStatusRepository.existsById(readStatusId)) {
+      log.warn("Read status delete rejected: not found id={}", readStatusId);
       throw new NoSuchElementException("ReadStatus with id " + readStatusId + " not found");
     }
     readStatusRepository.deleteById(readStatusId);
+    log.info("Read status deleted id={}", readStatusId);
   }
 }

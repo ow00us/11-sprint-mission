@@ -56,7 +56,7 @@ public class BasicUserService implements UserService {
     }
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
-        .map(profileRequest -> saveProfile(profileRequest, "user-create", null))
+        .map(profileRequest -> saveProfile(profileRequest, "create", null))
         .orElse(null);
 
     User user = new User(username, email, userCreateRequest.password(), nullableProfile);
@@ -124,7 +124,7 @@ public class BasicUserService implements UserService {
                 log.debug("Deleting previous profile userId={}, profileId={}", userId, profile.getId());
                 binaryContentRepository.deleteById(profile.getId());
               });
-          return saveProfile(profileRequest, "user-update", userId);
+          return saveProfile(profileRequest, "update", userId);
         })
         .orElse(null);
 
