@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/messages")
@@ -36,16 +38,23 @@ public class MessageController implements MessageApi {
       @RequestPart("messageCreateRequest") MessageCreateRequest messageCreateRequest,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
   ) {
+    int attachmentCount = attachments == null ? 0 : attachments.size();
+    log.info("Message create request channelId={}, authorId={}, attachmentCount={}",
+        messageCreateRequest.channelId(), messageCreateRequest.authorId(), attachmentCount);
     List<BinaryContentCreateRequest> attachmentRequests = Optional.ofNullable(attachments)
         .map(files -> files.stream()
             .map(file -> {
               try {
+                log.debug("Resolving message attachment fileName={}, size={}, contentType={}",
+                    file.getOriginalFilename(), file.getSize(), file.getContentType());
                 return new BinaryContentCreateRequest(
                     file.getOriginalFilename(),
                     file.getContentType(),
                     file.getBytes()
                 );
               } catch (IOException e) {
+                log.error("Failed to read message attachment fileName={}",
+                    file.getOriginalFilename(), e);
                 throw new RuntimeException(e);
               }
             })
@@ -60,6 +69,7 @@ public class MessageController implements MessageApi {
   @PatchMapping(path = "{messageId}")
   public ResponseEntity<MessageDto> update(@PathVariable("messageId") UUID messageId,
       @RequestBody MessageUpdateRequest request) {
+    log.info("Message update request messageId={}", messageId);
     MessageDto updatedMessage = messageService.update(messageId, request);
     return ResponseEntity
         .status(HttpStatus.OK)
@@ -68,6 +78,7 @@ public class MessageController implements MessageApi {
 
   @DeleteMapping(path = "{messageId}")
   public ResponseEntity<Void> delete(@PathVariable("messageId") UUID messageId) {
+    log.info("Message delete request messageId={}", messageId);
     messageService.delete(messageId);
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
@@ -81,6 +92,8 @@ public class MessageController implements MessageApi {
           @PageableDefault(size = 50, sort = "createdAt", direction = Sort.Direction.DESC)
           Pageable pageable) {
 
+    log.debug("Message list request channelId={}, cursor={}, page={}, size={}",
+        channelId, cursor, pageable.getPageNumber(), pageable.getPageSize());
     PageResponse<MessageDto> response = messageService.findAllByChannelId(channelId, cursor, pageable);
     return ResponseEntity
         .status(HttpStatus.OK)

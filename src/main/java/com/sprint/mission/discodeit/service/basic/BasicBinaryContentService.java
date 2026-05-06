@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Transactional(readOnly = true)
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
@@ -30,6 +32,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     String fileName = request.fileName();
     byte[] bytes = request.bytes();
     String contentType = request.contentType();
+    log.debug("Creating binary content fileName={}, size={}, contentType={}",
+        fileName, bytes.length, contentType);
     BinaryContent binaryContent = new BinaryContent(
         fileName,
         (long) bytes.length,
@@ -37,6 +41,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     );
     BinaryContent createdBinaryContent = binaryContentRepository.save(binaryContent);
     binaryContentStorage.put(createdBinaryContent.getId(), bytes);
+    log.info("Binary content created id={}, fileName={}, size={}",
+        createdBinaryContent.getId(), fileName, bytes.length);
     return binaryContentMapper.toDto(createdBinaryContent);
   }
 
@@ -59,8 +65,10 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   public void delete(UUID binaryContentId) {
     if (!binaryContentRepository.existsById(binaryContentId)) {
+      log.warn("Binary content delete rejected: not found id={}", binaryContentId);
       throw new NoSuchElementException("BinaryContent with id " + binaryContentId + " not found");
     }
     binaryContentRepository.deleteById(binaryContentId);
+    log.info("Binary content deleted id={}", binaryContentId);
   }
 }

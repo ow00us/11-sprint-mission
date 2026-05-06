@@ -1,6 +1,14 @@
 package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,14 +18,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -31,13 +31,14 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         this.root = Paths.get(rootPath);
     }
 
-    @jakarta.annotation.PostConstruct
+    @PostConstruct
     public void init() {
         try {
             Files.createDirectories(root);
             log.info("Storage initialized at {}", root.toAbsolutePath());
         } catch (IOException e) {
-            throw new RuntimeException("Storage 초기화 실패", e);
+            log.error("Failed to initialize storage root={}", root.toAbsolutePath(), e);
+            throw new RuntimeException("Failed to initialize storage", e);
         }
     }
 
@@ -49,23 +50,29 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     public UUID put(UUID id, byte[] bytes) {
         try {
             Files.write(resolvePath(id), bytes);
+            log.debug("Binary content stored id={}, size={}", id, bytes.length);
             return id;
         } catch (IOException e) {
-            throw new RuntimeException("파일 저장 실패: " + id, e);
+            log.error("Failed to store binary content id={}", id, e);
+            throw new RuntimeException("Failed to store binary content: " + id, e);
         }
     }
 
     @Override
     public InputStream get(UUID id) {
         try {
+            log.debug("Loading binary content id={}", id);
             return Files.newInputStream(resolvePath(id));
         } catch (IOException e) {
-            throw new RuntimeException("파일 로드 실패: " + id, e);
+            log.error("Failed to load binary content id={}", id, e);
+            throw new RuntimeException("Failed to load binary content: " + id, e);
         }
     }
 
     @Override
     public ResponseEntity<?> download(BinaryContentDto dto) {
+        log.info("Downloading binary content id={}, fileName={}, size={}",
+                dto.id(), dto.fileName(), dto.size());
         InputStream inputStream = get(dto.id());
 
         return ResponseEntity.ok()
