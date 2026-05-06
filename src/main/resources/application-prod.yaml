@@ -7,3 +7,7 @@ spring:
     username: ${DB_USERNAME:discodeit_user}
     password: ${DB_PASSWORD:discodeit1234}
     driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    com.sprint.mission.discodeit: info
